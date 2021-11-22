@@ -341,6 +341,92 @@ public class ImageUtil {
         return outImg;
     }
 
+    public static BufferedImage logContrast(BufferedImage src) {
+        BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());;
+
+        short logLUT[] = new short[256];
+
+        for (int i = 0; i < 256; i++) {
+			logLUT[i] = (short) ((255.0 / Math.log(1.0 + 255)) * Math.log(1.0 + i));
+        }
+        System.out.println(Arrays.toString(logLUT));
+//        normalize(logLUT,0,255);
+
+        ShortLookupTable sLUT = new ShortLookupTable(0, logLUT);
+        LookupOp op = new LookupOp(sLUT, null);
+        op.filter(src, dst);
+
+        return dst;
+    }
+
+    public static BufferedImage logContrastV2(BufferedImage src) {
+        BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());;
+
+        short[] rLUT = new short[256];
+        short[] gLUT = new short[256];
+        short[] bLUT = new short[256];
+
+        short[][] logLUT = {rLUT, gLUT, bLUT};
+
+        for (int b = 0; b < src.getRaster().getNumBands() && b<3; b++) {
+
+            int max = Integer.MIN_VALUE;
+            int min = Integer.MAX_VALUE;
+            int pix;
+
+            // find max and min
+            for (int y = 0; y < src.getHeight(); y++)
+                for (int x = 0; x < src.getWidth(); x++) {
+                    pix = src.getRaster().getSample(x, y, b);
+                    if (pix > max)
+                        max = pix;
+                    if (pix < min)
+                        min = pix;
+                }
+
+            for (int i = 0; i < 256; i++) {
+                double val = (255.0 / Math.log(1.0 + max)) * Math.log(1.0 + i);
+                //                normalize(logLUT[b],0,255);
+                logLUT[b][i] = (short) constrain((int)Math.round(val));
+            }
+        }
+
+//        System.out.println(Arrays.toString(logLUT[0]));
+//        System.out.println(Arrays.toString(logLUT[1]));
+//        System.out.println(Arrays.toString(logLUT[2]));
+
+        ShortLookupTable lookupTable  = new ShortLookupTable(0, logLUT);
+        LookupOp op = new LookupOp(lookupTable, null);
+        op.filter(src, dst);
+
+        return dst;
+    }
+
+    public static BufferedImage expContrast(BufferedImage src) {
+        BufferedImage dst = null;
+
+        dst = new BufferedImage(src.getWidth(), src.getHeight(), src.getType());
+
+        short[] expLUT = new short[256];
+        // build LUT
+        for (short i = 0; i < 256; i++) {
+
+//			double t = (double) i / 255.0; // scale value to range 0..1
+//			t = (double) ((Math.exp(t) - 1.0) / (Math.exp(1.0) - 1.0)); //compute exp
+//			t = t * 255.0; // scale back to 0..255
+//			expLUT[i] = (short) t;
+
+            expLUT[i] = (short) (255.0*((Math.exp(i/255.) - 1.0) / (Math.exp(1.0) - 1.0)));
+        }
+//        System.out.println(Arrays.toString(expLUT));
+
+        ShortLookupTable lut = new ShortLookupTable(0, expLUT);
+        LookupOp lop = new LookupOp(lut, null);
+        lop.filter(src, dst);
+
+        return dst;
+    }
+
     public static BufferedImage contrastGamma(BufferedImage inImg, double gamma){
         BufferedImage outImg = new BufferedImage(inImg.getWidth(),inImg.getHeight(),inImg.getType());
 
@@ -353,9 +439,8 @@ public class ImageUtil {
             double c = b * 255.0; // scale to [0 ... 255]
 
             contrastLUT[i] = (short)constrain((int)Math.round(c));
-
-            System.out.print(contrastLUT[i] + " ");
         }
+//        System.out.print(Arrays.toString(contrastLUT));
 
         ShortLookupTable shortLookupTable = new ShortLookupTable(0, contrastLUT);
         LookupOp lookupOp = new LookupOp(shortLookupTable, null);
@@ -367,6 +452,32 @@ public class ImageUtil {
     public static int normalize(int val, int oldMin, int oldMax, int newMin, int newMax){
         double c = 1.0 * (newMax - newMin)/(oldMax - oldMin);
         return (int)Math.round(c * (val-oldMin) + newMin);
+    }
+
+    // normalize a LUT
+    static void normalize(short[] lut, int newMin, int newMax) {
+        short max = Short.MIN_VALUE;
+        short min = Short.MAX_VALUE;
+
+        // find max and min
+        for (int i = 0; i < lut.length; i++) {
+            if (lut[i] > max)
+                max = lut[i];
+            if (lut[i] < min)
+                min = lut[i];
+        }
+
+        // (x-min)(255-0)/(max-min)+0
+        // (x-min)(newMax-newMin)/(max-min)+newMin
+        double c = 1.0 * (newMax - newMin) / (max - min);
+
+        System.out.println("\r\n"+"max= "+max+" min= "+min+" c= "+c );
+        // build output
+        for (int i = 0; i < lut.length; i++) {
+            lut[i] = (short) ((lut[i] - min) * c + newMin);
+            System.out.print(lut[i] + " ");
+        }
+        // System.out.println("\r\n"+"max= "+max+" min= "+min+" c= "+c );
     }
 
     public static BufferedImage contrastStretch(BufferedImage inImg){

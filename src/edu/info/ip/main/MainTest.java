@@ -9,8 +9,8 @@ import static edu.info.ip.util.ImageUtil.*;
 public class MainTest {
 
     public static void main(String[] args) {
-//        BufferedImage inputImg= loadImage("./test_images/lena_color_512.bmp");
-        BufferedImage inputImg= loadImage("./test_images/eight.bmp");
+        BufferedImage inputImg= loadImage("./test_images/lena_color_512.bmp");
+//        BufferedImage inputImg= loadImage("./test_images/eight.bmp");
 //        BufferedImage inputImg= loadImage("./test_images/lena_gray_512.bmp");
 //        BufferedImage inputImg= loadImage("./test_images/logo.png");
         displayImage(inputImg, "Original image");
@@ -57,6 +57,11 @@ public class MainTest {
 //        BufferedImage testImage = applySettingsDlg(inputImg, new BrightnessRGBDlg());
 //        displayImage(testImage, "Brightness RGB");
 
+        displayImage(expContrast(inputImg), "EXP Contrast");
+        displayImage(logContrast(inputImg), "LOG Contrast");
+        displayImage(logContrastV2(inputImg), "LOG Contrast");
+
+
 //        displayImage(contrastGamma(inputImg, 0.5));
 
 //        BufferedImage testImg = applySettingsDlg(inputImg, new GammaDlg());
@@ -64,33 +69,13 @@ public class MainTest {
 
 //        displayImage(contrastStretch(inputImg));
 
-//        displayImage(negativate(inputImg));
+//        displayImage(negative(inputImg));
 
 //        displayImage(colorToGray(inputImg, GrayTransforms.GRAY_TRANSFORMS_GREEN), "Green");
 //        displayImage(colorToGray(inputImg, GrayTransforms.GRAY_TRANSFORMS_AVG), "AVG");
 //        displayImage(colorToGray(inputImg, GrayTransforms.GRAY_TRANSFORMS_SQRT), "SQRT");
 //        displayImage(colorToGray(inputImg, GrayTransforms.GRAY_TRANSFORMS_USUAL), "USUAL");
 //        displayImage(colorToGray(inputImg, GrayTransforms.GRAY_TRANSFORMS_PAL), "PAL");
-
-        BufferedImage grayImg, thresholdImg, contrastImg, negativeImg, maskedImg;
-
-//        grayImg = colorToGray(inputImg,GrayTransforms.GRAY_TRANSFORMS_PAL);
-//        displayImage(grayImg, "Gray PAL");
-
-        contrastImg = contrastStretch(inputImg);
-        displayImage(contrastImg, "Contrast Stretch");
-
-//        thresholdImg = threshold(contrastImg, 40);
-        thresholdImg = applySettingsDlg(contrastImg, new ThresholdDlg());
-        displayImage(thresholdImg, "Threshold");
-
-        negativeImg = negative(thresholdImg);
-        displayImage(negativeImg, "Negative");
-
-        maskedImg = applyMask(inputImg,negativeImg);
-        displayImage(maskedImg,"Apply Mask");
-
-        displayImage(contrastStretch(maskedImg));
     }
 
 }
